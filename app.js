@@ -1,5 +1,5 @@
 //jshint esversion:6
-
+const dotenv = require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -12,49 +12,46 @@ app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
-
-mongoose.connect("mongodb+srv://DocFaust:ferd1gix9veak.BOOS@docfaustcluster.0ccey.azure.mongodb.net/todoListDB?retryWrites=true&w=majority", {
-     useNewUrlParser: true,
-     useUnifiedTopology: true,
-   });
-// mongoose.connect("mongodb://localhost:27017/todolistDB", {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true,
-// });
+const mongourl = process.env.mongourl;
+console.log(mongourl);
+mongoose.connect(mongourl, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
 const itemsSchema = {
-  item: String,
+  item: String
 };
 
 const Item = mongoose.model("Item", itemsSchema);
 
 const item1 = new Item({
-  item: "Welcome to your ToDo List",
+  item: "Welcome to your ToDo List"
 });
 const item2 = new Item({
-  item: "Hit the + button to add a new item.",
+  item: "Hit the + button to add a new item."
 });
 const item3 = new Item({
-  item: "👈🏻 Hit this to delete an item.",
+  item: "👈🏻 Hit this to delete an item."
 });
 
 const defaultItems = [item1, item2, item3];
 
 const listSchema = {
   name: String,
-  items: [itemsSchema],
+  items: [itemsSchema]
 };
 
 const List = mongoose.model("List", listSchema);
 
-app.get("/", function (req, res) {
+app.get("/", function(req, res) {
   Item.find((err, result) => {
     if (err) {
       console.log(err);
     } else {
       if (result.length === 0) {
         console.log("Table empty, creating default items");
-        Item.insertMany(defaultItems, (err) => {
+        Item.insertMany(defaultItems, err => {
           if (err) {
             console.log(err);
           } else {
@@ -69,12 +66,12 @@ app.get("/", function (req, res) {
   });
 });
 
-app.post("/", function (req, res) {
+app.post("/", function(req, res) {
   const itemName = req.body.newItem;
   const listName = req.body.list;
 
   const newItem = new Item({
-    item: itemName,
+    item: itemName
   });
 
   if (listName === "Today") {
@@ -89,7 +86,7 @@ app.post("/", function (req, res) {
   }
 });
 
-app.get("/:customListName", function (req, res) {
+app.get("/:customListName", function(req, res) {
   const customListName = _.capitalize(req.params.customListName);
 
   List.findOne({ name: customListName }, (err, foundList) => {
@@ -97,21 +94,21 @@ app.get("/:customListName", function (req, res) {
       if (!foundList) {
         const list = new List({
           name: customListName,
-          items: defaultItems,
+          items: defaultItems
         });
         list.save();
         res.redirect("/" + customListName);
       } else {
         res.render("list", {
           listTitle: foundList.name,
-          newListItems: foundList.items,
+          newListItems: foundList.items
         });
       }
     }
   });
 });
 
-app.get("/about", function (req, res) {
+app.get("/about", function(req, res) {
   res.render("about");
 });
 
@@ -120,7 +117,7 @@ app.post("/delete", (req, res) => {
   const listName = _.capitalize(req.body.listName);
 
   if (listName === "Today") {
-    Item.findByIdAndRemove(checkedItemId, (err) => {
+    Item.findByIdAndRemove(checkedItemId, err => {
       if (err) {
         console.log(err);
       } else {
@@ -141,6 +138,6 @@ app.post("/delete", (req, res) => {
   }
 });
 
-app.listen(port, function () {
+app.listen(port, function() {
   console.log("Server started on port" + port);
 });
